@@ -1,0 +1,8 @@
+// 通用配置
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-kapt'
+android {
+    defaultConfig {
+
+    }
+}

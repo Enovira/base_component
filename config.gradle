@@ -1,0 +1,12 @@
+ext {
+    isDebug = false
+
+    android = [
+            compileSdkVersion: 34,
+            minSdkVersion    : 29,
+            targetSdkVersion : 34,
+            versionCode      : 1,
+            versionName      : "1.0.0",
+            suffixVersionName: ".1"
+    ]
+}

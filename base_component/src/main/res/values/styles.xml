@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="CustomTheme" parent="">
+        <item name="elevationOverlayEnabled">false</item>
+    </style>
+    <style name="BottomInAnimation">
+        <item name="android:windowEnterAnimation">@anim/anim_bottom_in</item>
+        <item name="android:windowExitAnimation">@null</item>
+    </style>
+</resources>
