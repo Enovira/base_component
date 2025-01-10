@@ -10,6 +10,7 @@ import androidx.databinding.ViewDataBinding
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import java.lang.reflect.Method
 import java.lang.reflect.ParameterizedType
 
 /**
@@ -21,17 +22,17 @@ abstract class BaseFragment<VM: ViewModel, VB: ViewDataBinding>: Fragment() {
 
     protected lateinit var mViewModel: VM
     private var binding: VB? = null
-    protected var mBinding: VB = binding!!
+    protected val mBinding: VB get() = binding!!
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        initView()
         mViewModel = createViewModel()
-        binding = DataBindingUtil.inflate(layoutInflater, getLayoutId(), null, false)
+        binding = getViewDataBindingClass()
         mBinding.lifecycleOwner = this
+        initView()
         return mBinding.root
     }
 
@@ -40,24 +41,45 @@ abstract class BaseFragment<VM: ViewModel, VB: ViewDataBinding>: Fragment() {
         binding = null
     }
 
-    /**
-     * 传入布局资源生成DataViewBinding
-     */
-    @LayoutRes
-    abstract fun getLayoutId(): Int
 
+    /**
+     * 初始化UI界面，生命周期:onCreate
+     * 若要实现mvvm，需将dataViewBinding和viewModel进行双向绑定
+     * 举例: 在布局中使用layout作为根布局，在layout-data-variable中引入ViewModel的类型
+     * 最后进行绑定mBinding.viewModel = mViewModel
+     */
+    abstract fun initView()
+
+    /**
+     * 依据传入的ViewModel对象类型创建实例
+     */
     private fun createViewModel(): VM {
-        return ViewModelProvider(this)[getVMClass().javaClass]
+        return ViewModelProvider(this)[getVMClass()]
     }
 
     @Suppress("UNCHECKED_CAST")
-    private fun getVMClass(): VM {
+    private fun <VM> getVMClass(): VM {
         return (this::class.java.genericSuperclass as ParameterizedType).actualTypeArguments[0] as VM
     }
 
     /**
-     * 初始化UI界面，生命周期:onCreate
-     * 若要实现mvvm，需将dataViewBinding和viewModel进行绑定
+     * 依据传入的ViewDataBinding对象类型创建实例
      */
-    abstract fun initView()
+    @Suppress("UNCHECKED_CAST")
+    private fun getViewDataBindingClass(): VB {
+        val clazz = getViewDataBindingImplClazz(this)
+        val method = getInflateMethod(clazz)
+        val binding = method.invoke(null, layoutInflater, this, false)
+        return binding as VB
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun getViewDataBindingImplClazz(obj: Any): Class<VB> {
+        val paramClazz = (obj::class.java.genericSuperclass as ParameterizedType).actualTypeArguments[1]
+        return paramClazz as Class<VB>
+    }
+
+    private fun getInflateMethod(clazz: Class<*>): Method {
+        return clazz.getMethod("inflate", LayoutInflater::class.java, ViewGroup::class.java, Boolean::class.java)
+    }
 }
